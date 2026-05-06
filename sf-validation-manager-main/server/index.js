@@ -6,6 +6,7 @@ const session = require("express-session");
 const crypto = require("crypto");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 // ─── PKCE Helpers ─────────────────────────────────────────────────────────────
@@ -18,12 +19,22 @@ function generateCodeChallenge(verifier) {
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+//app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
 app.use(session({
   secret: process.env.SESSION_SECRET || "changeme_supersecret",
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
+ // cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
+ cookie: {
+  secure: true,
+  httpOnly: true,
+  sameSite: "none",
+  maxAge: 24 * 60 * 60 * 1000
+}
 }));
 
 // ─── OAuth 2.0 + PKCE Routes ──────────────────────────────────────────────────
@@ -81,10 +92,12 @@ app.get("/auth/callback", async (req, res) => {
     req.session.refresh_token = refresh_token;
     delete req.session.codeVerifier;
 
-    res.redirect("http://localhost:3000?login=success");
+   // res.redirect("http://localhost:3000?login=success");
+   res.redirect(process.env.FRONTEND_URL + "?login=success");
   } catch (err) {
     console.error("Token exchange error:", err.response?.data || err.message);
-    res.redirect("http://localhost:3000?login=error");
+  //  res.redirect("http://localhost:3000?login=error");
+  res.redirect(process.env.FRONTEND_URL + "?login=success");
   }
 });
 
