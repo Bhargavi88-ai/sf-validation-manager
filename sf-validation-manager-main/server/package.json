@@ -1,6 +1,7 @@
 {
   "name": "sf-validation-manager-server",
   "version": "1.0.0",
+
   "description": "Backend proxy server for Salesforce OAuth and API calls",
   "main": "index.js",
   "scripts": {
