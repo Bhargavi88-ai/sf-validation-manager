@@ -1,59 +1,73 @@
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+
+const API = import.meta.env.VITE_API_URL;
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [rules, setRules] = useState([]);
 
   const login = () => {
-    window.location.href = "http://localhost:5000/auth/login"
-  }
+    window.location.href = `${API}/auth/login`;
+  };
+
+  useEffect(() => {
+    fetch(`${API}/auth/status`, {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated) {
+          setAuthenticated(true);
+
+          fetch(`${API}/api/validation-rules`, {
+            credentials: "include",
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              setRules(data.rules || []);
+            });
+        }
+      });
+  }, []);
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-        backgroundColor: "#f4f6f9",
-        fontFamily: "Arial"
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "42px",
-          marginBottom: "20px",
-          color: "#0176d3"
-        }}
-      >
-        SF Validation Manager
-      </h1>
+    <div style={{ padding: "40px", fontFamily: "Arial" }}>
+      <h1>SF Validation Manager</h1>
 
-      <p
-        style={{
-          marginBottom: "30px",
-          fontSize: "18px",
-          color: "#444"
-        }}
-      >
-        Manage Salesforce Validation Rules Easily
-      </p>
+      {!authenticated ? (
+        <button onClick={login}>
+          Login with Salesforce
+        </button>
+      ) : (
+        <>
+          <h2>Validation Rules</h2>
 
-      <button
-        onClick={login}
-        style={{
-          padding: "14px 28px",
-          fontSize: "18px",
-          backgroundColor: "#0176d3",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer"
-        }}
-      >
-        Login with Salesforce
-      </button>
+          {rules.length === 0 ? (
+            <p>No rules found</p>
+          ) : (
+            <table border="1" cellPadding="10">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Active</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rules.map((rule) => (
+                  <tr key={rule.id}>
+                    <td>{rule.name}</td>
+                    <td>{rule.active ? "Yes" : "No"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
